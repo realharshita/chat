@@ -1,14 +1,20 @@
-from flask import Flask, jsonify, request
-from flask_socketio import SocketIO, emit
+from flask import Flask, render_template, request
+from flask_socketio import SocketIO, join_room, leave_room, emit
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
-users = {
-    'user1': {'password': 'pass1'},
-    'user2': {'password': 'pass2'}
+# Dictionary to store chat rooms and their participants
+chat_rooms = {
+    'general': [],
+    'random': [],
+    'python_enthusiasts': []
 }
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 @socketio.on('connect')
 def handle_connect():
@@ -18,13 +24,18 @@ def handle_connect():
 def handle_disconnect():
     print('Client disconnected')
 
-@app.route('/login', methods=['POST'])
-def login():
-    username = request.json.get('username')
-    password = request.json.get('password')
-    if username in users and users[username]['password'] == password:
-        return jsonify({'success': True})
-    return jsonify({'success': False, 'error': 'Invalid credentials'})
+@socketio.on('join')
+def join(data):
+    username = data['username']
+    room = data['room'].replace(' ', '_').lower()  # Replace spaces with underscores and convert to lowercase
+    print(f'Received room name: {room}')  # Print the received room name for debugging
+    if room in chat_rooms:
+        join_room(room)
+        chat_rooms[room].append(username)
+        emit('update_users', {'users': chat_rooms[room]}, room=room)
+        print(f'{username} joined room: {room}')
+    else:
+        print(f'Room "{room}" does not exist')
 
 if __name__ == '__main__':
     socketio.run(app)
