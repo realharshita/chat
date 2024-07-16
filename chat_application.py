@@ -6,10 +6,11 @@ app.title("Real-Time Chat Application")
 
 def login():
     username = username_entry.get().strip()
-    if username:
+    password = password_entry.get().strip()
+    if username and password:
         messagebox.showinfo("Login Successful", f"Logged in as {username}")
     else:
-        messagebox.showerror("Error", "Username cannot be empty")
+        messagebox.showerror("Error", "Username and password cannot be empty")
 
 username_label = tk.Label(app, text="Username:")
 username_label.pack()
